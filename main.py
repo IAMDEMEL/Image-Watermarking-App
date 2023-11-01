@@ -13,6 +13,7 @@ font = 'Helvetica'
 file_name = ''
 image_file_types = [("All Files", "*.*"), ("PNG files", "*.png"), ("JPG files", "*.jpg*"), ("GIF files", "*.gif"),
                     ("TIFF files", "*.tiff")]
+watermarks_list = [1, 3, 5, 7]
 
 window: Tk
 save_window: Toplevel
@@ -25,18 +26,16 @@ cached_image: Image
 # water_mark cache refs
 new_filename: StringVar
 water_mark: StringVar
+font_size: IntVar
 transparency: IntVar
-x_pos: IntVar
-y_pos: IntVar
 image_frame: Frame
 water_mark_label: Label
 water_mark_entry: Entry
 transparency_slider_label: Label
 transparency_slider: Scale
-xpos_slider_label: Label
-xpos_slider: Scale
-ypos_slider_label: Label
-ypos_slider: Scale
+watermarks_to_make: StringVar
+watermarks_to_make_label: Label
+watermarks_to_make_dropdown: OptionMenu
 back_but: Button
 save_but: Button
 
@@ -81,7 +80,6 @@ def start_program():
 # User Option Of Text Or Image Watermark
 def text_or_image_watermark():
     start_but.place_forget()
-    # print(f'Screen Width: {window.winfo_width()}, Screen Height: {window.winfo_height()}')
     text_but = Button(window, text="Text WaterMark", command=find_file)
     text_but.place(anchor=CENTER, x=140, y=125)
 
@@ -105,15 +103,18 @@ def find_file():
 
 # Change From Start Screen To Image Editor
 def text_image_editing_state():
-    global water_mark, transparency, x_pos, y_pos, image_frame, water_mark_label, water_mark_entry, \
-        transparency_slider_label, transparency_slider, xpos_slider_label, xpos_slider, ypos_slider_label, \
-        ypos_slider, back_but, save_but
+    global water_mark, transparency, image_frame, water_mark_label, water_mark_entry, transparency_slider_label, \
+        transparency_slider, watermarks_to_make_label, watermarks_to_make_dropdown, watermarks_to_make, back_but, \
+        save_but, font_size
     water_mark = StringVar()
+    font_size = IntVar()
     transparency = IntVar()
-    x_pos = IntVar()
-    y_pos = IntVar()
-    x_pos.set(int(frame_width / 2))
-    y_pos.set(int(frame_height / 2))
+    watermarks_to_make = StringVar()
+    watermarks_to_make.set(str(watermarks_list[0]))
+
+    water_mark.set('Hello World')
+    font_size.set(16)
+    transparency.set(127)
 
     # - Create A Frame With To Hold The Image In
     image_frame = Frame(window, width=frame_width, height=frame_height, borderwidth=4, relief='raised')
@@ -121,7 +122,7 @@ def text_image_editing_state():
 
     # - Text Input Box
     water_mark_label = Label(window, text='Water Mark')
-    water_mark_label.grid(column=1, row=2, padx=(5, 10))  # Test # 0 padding on left and 10 pixel adding on right
+    water_mark_label.grid(column=1, row=2, padx=(5, 0))  # Test # 0 padding on left and 10 pixel adding on right
 
     water_mark_entry = Entry(window, textvariable=water_mark)
     water_mark_entry.grid(column=2, row=2)
@@ -136,19 +137,19 @@ def text_image_editing_state():
 
     # - X Pos Sliders (based on the image size)
     # TODO # Edit Scale Appearance
-    xpos_slider_label = Label(window, text='X-Position')
-    xpos_slider_label.grid(column=3, row=2, padx=(20, 10))
+    watermarks_to_make_label = Label(window, text='Watermark #')
+    watermarks_to_make_label.grid(column=3, row=2, padx=(5, 10))
 
-    xpos_slider = Scale(window, orient=HORIZONTAL, length=200, from_=0, to=frame_width, variable=x_pos)
-    xpos_slider.grid(column=4, row=2)
+    watermarks_to_make_dropdown = OptionMenu(window, watermarks_to_make, *watermarks_list)
+    watermarks_to_make_dropdown.grid(column=4, row=2)
 
-    # - Y Pos Sliders (based on the image size)
-    # TODO # Edit Scale Appearance
-    ypos_slider_label = Label(window, text='Y-Position')
-    ypos_slider_label.grid(column=3, row=3, padx=(20, 10))
+    # - Font Sliders (based on the image size)
+    # TODO # Font Scale Appearance
+    font_slider_label = Label(window, text='Font Size')
+    font_slider_label.grid(column=5, row=2, padx=(5, 10))
 
-    ypos_slider = Scale(window, orient=HORIZONTAL, length=200, from_=0, to=frame_height, variable=y_pos)
-    ypos_slider.grid(column=4, row=3)
+    font_slider = Scale(window, orient=HORIZONTAL, length=100, from_=0, to=100, variable=font_size)
+    font_slider.grid(column=6, row=2)
 
     # - User Help Buttons to explain the tools
 
@@ -156,11 +157,11 @@ def text_image_editing_state():
 
     # - Back Button To Take User TO Start Screen
     back_but = Button(window, text='Back', command=selection_screen_transition_from_editing_state)
-    back_but.grid(column=5, row=2, padx=(30, 10))
+    back_but.grid(column=7, row=2, padx=(5, 10))
 
     # - Save Button To Save The Image
     save_but = Button(window, text='Save', command=save_image_window)
-    save_but.grid(column=5, row=3, padx=(30, 10))
+    save_but.grid(column=7, row=3, padx=(5, 10))
 
     update_text_image()
 
@@ -171,16 +172,14 @@ def update_text_image():
     # Open image using Pillow
     image = Image.open(file_name)
 
+    # TODO 02. Do Not Resize The Image
+    #  Use A Canvas To Zoom In and Out and Move Frame to The
+    #  Right Of the Canvas To Show Mini Diagram Of The Full Image
     # Resize Image
     resized_image = image.resize((int(image_frame.winfo_screenwidth() / 2), int(image_frame.winfo_screenheight() / 2)),
                                  resample=Image.LANCZOS)
 
-    # Draw Image So It Is Editable
-    im = ImageDraw.Draw(resized_image)
-    mf = ImageFont.load_default()
-
-    # Add Text to an image
-    im.text((x_pos.get(), y_pos.get()), f'{water_mark.get()}', (255, 255, 255, transparency.get()), font=mf)
+    draw_watermark(resized_image)
 
     # Saving Edited Image
     resized_image.save('images/cached_image.png')
@@ -190,6 +189,88 @@ def update_text_image():
 
     # Update Image
     window.after(1000, update_text_image)
+
+
+def draw_watermark(resized_image):
+    global watermarks_to_make
+    xpos = IntVar()
+    ypos = IntVar()
+    if int(watermarks_to_make.get()) == 7:
+        water_mark_xpos = int(resized_image.width / 8)
+        xpos.set(water_mark_xpos)
+        ypos.set(int(resized_image.height / 2))
+
+        # Draw Image So It Is Editable
+        im = ImageDraw.Draw(resized_image)
+        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
+        mf = ImageFont.truetype("arial.ttf", font_size.get())
+
+        # Add Text to an image
+        for i in range(1, int(watermarks_to_make.get()) + 1):
+            if i % 2 == 1:
+                print(f"if: {i}")
+                im.text((xpos.get(), int(ypos.get() / 2) * 2.8), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
+                        font=mf, anchor='mm')
+            else:
+                print(f"elif: {i}")
+                im.text((xpos.get(), int(ypos.get() / 2.5)), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
+                        font=mf, anchor='mm')
+            xpos.set(int(xpos.get() + water_mark_xpos))
+
+    elif int(watermarks_to_make.get()) == 5:
+        water_mark_xpos = int(resized_image.width / 6)
+        xpos.set(water_mark_xpos)
+        ypos.set(int(resized_image.height / 2))
+
+        # Draw Image So It Is Editable
+        im = ImageDraw.Draw(resized_image)
+        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
+        mf = ImageFont.truetype("arial.ttf", font_size.get())
+
+        # Add Text to an image
+        for i in range(1, int(watermarks_to_make.get()) + 1):
+            if i % 2 == 1:
+                print(f"if: {i}")
+                im.text((xpos.get(), int(ypos.get() / 2) * 2.8), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
+                        font=mf, anchor='mm')
+            else:
+                print(f"elif: {i}")
+                im.text((xpos.get(), int(ypos.get() / 2.5)), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
+                        font=mf, anchor='mm')
+            xpos.set(int(xpos.get() + water_mark_xpos))
+
+    elif int(watermarks_to_make.get()) == 3:
+        water_mark_xpos = int(resized_image.width / 4)
+        xpos.set(water_mark_xpos)
+        ypos.set(int(resized_image.height / 2))
+
+        # Draw Image So It Is Editable
+        im = ImageDraw.Draw(resized_image)
+        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
+        mf = ImageFont.truetype("arial.ttf", font_size.get())
+
+        # Add Text to an image
+        for i in range(1, int(watermarks_to_make.get()) + 1):
+            if i % 2 == 1:
+                print(f"if: {i}")
+                im.text((xpos.get(), int(ypos.get() / 2) * 2.8), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
+                        font=mf, anchor='mm')
+            else:
+                print(f"elif: {i}")
+                im.text((xpos.get(), int(ypos.get() / 2.5)), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
+                        font=mf, anchor='mm')
+            xpos.set(int(xpos.get() + water_mark_xpos))
+
+    elif int(watermarks_to_make.get()) == 1:
+        xpos.set(int(resized_image.width / 2))
+        ypos.set(int(resized_image.height / 2))
+
+        # Draw Image So It Is Editable
+        im = ImageDraw.Draw(resized_image)
+        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
+        mf = ImageFont.truetype("arial.ttf", font_size.get())
+
+        im.text((xpos.get(), ypos.get()), f'{water_mark.get()}', (255, 0, 0, transparency.get()), font=mf, anchor='mm')
 
 
 def display_image():
@@ -226,25 +307,16 @@ def save_image_window():
 
 
 def save_file():
-    # If no file name prevent this code from executing ***
-    # TODO Prompt User That They Need To Enter A File Name ?????????????????????????????????????
-    if len(new_filename.get()) > 1:
-        # Resize the image if using tkinter frame
+    if len(new_filename.get()) > 0:
         cached_image.save(f'{file_directory_path}/{new_filename.get()}.png')
         for widgets in save_window.winfo_children():
             widgets.destroy()
 
         Label(save_window, text="Would you like to add a watermark to another image?", font='Helvetica 12 normal',
-              bg=BKG_COLOR, fg=FRG_COLOR).grid(column=1, row=2, padx=(10, 5), pady=(70, 0))
-        Button(save_window, text='Yes', command=selection_screen_transition_from_editing_state).grid(column=1, row=3,
-                                                                                                     padx=(20, 5),
-                                                                                                     pady=(10, 0))
-        Button(save_window, text='No', command=close_program).grid(column=2, row=3, pady=(10, 0))
-    # else:
-    #     popup_label = Label(save_window, text="Please enter a file name before continuing.", font='Helvetica 12 normal',
-    #                         bg=BKG_COLOR, fg='blue')
-    #     popup_label.grid(column=1, row=1, padx=(10, 5), pady=(70, 0))
-    #     # save_window.after(3000, popup_label.destroy())
+              bg=BKG_COLOR, fg=FRG_COLOR).place(anchor=CENTER, x=200, y=75)
+        Button(save_window, text='Yes',
+               command=selection_screen_transition_from_editing_state).place(anchor=CENTER, x=140, y=125)
+        Button(save_window, text='No', command=close_program).place(anchor=CENTER, x=260, y=125)
 
 
 def close_program():
@@ -267,10 +339,6 @@ def selection_screen_transition_from_editing_state():
     water_mark_entry.grid_forget()
     transparency_slider_label.grid_forget()
     transparency_slider.grid_forget()
-    xpos_slider_label.grid_forget()
-    xpos_slider.grid_forget()
-    ypos_slider_label.grid_forget()
-    ypos_slider.grid_forget()
     back_but.grid_forget()
     save_but.grid_forget()
 
