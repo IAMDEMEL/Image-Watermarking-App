@@ -1,4 +1,5 @@
 import tkinter
+from font_grabber import get_fonts
 from tkinter import *
 from tkinter import filedialog as fd
 from PIL import Image, ImageTk, ImageDraw, ImageFont
@@ -36,6 +37,7 @@ transparency_slider: Scale
 watermarks_to_make: StringVar
 watermarks_to_make_label: Label
 watermarks_to_make_dropdown: OptionMenu
+listbox: Listbox
 back_but: Button
 save_but: Button
 
@@ -105,7 +107,7 @@ def find_file():
 def text_image_editing_state():
     global water_mark, transparency, image_frame, water_mark_label, water_mark_entry, transparency_slider_label, \
         transparency_slider, watermarks_to_make_label, watermarks_to_make_dropdown, watermarks_to_make, back_but, \
-        save_but, font_size
+        save_but, font_size, listbox
     water_mark = StringVar()
     font_size = IntVar()
     transparency = IntVar()
@@ -143,9 +145,23 @@ def text_image_editing_state():
     watermarks_to_make_dropdown = OptionMenu(window, watermarks_to_make, *watermarks_list)
     watermarks_to_make_dropdown.grid(column=4, row=2)
 
-    # - Font Sliders (based on the image size)
-    # TODO # Font Scale Appearance
-    font_slider_label = Label(window, text='Font Size')
+    # - Fonts Listbox (based on the image size)
+    # TODO # Fonts Listbox Appearance
+    listbox_label = Label(window, text='Fonts')
+    listbox_label.grid(column=4, row=3, padx=(5, 10))
+
+    listbox = Listbox(window, selectmode=SINGLE, width=30)
+    listbox.grid(column=5, row=3)
+
+    # Add Fonts Families To Listbox
+    for f in get_fonts().keys():
+        listbox.insert('end', f)
+
+    listbox.select_set(0)
+
+    # - Fonts Sliders (based on the image size)
+    # TODO # Fonts Scale Appearance
+    font_slider_label = Label(window, text='Fonts Size')
     font_slider_label.grid(column=5, row=2, padx=(5, 10))
 
     font_slider = Scale(window, orient=HORIZONTAL, length=100, from_=0, to=100, variable=font_size)
@@ -192,9 +208,12 @@ def update_text_image():
 
 
 def draw_watermark(resized_image):
-    global watermarks_to_make
+    global watermarks_to_make, listbox
     xpos = IntVar()
     ypos = IntVar()
+    font_dict = get_fonts()
+    current_font = font_dict[listbox.get(listbox.curselection())]
+
     if int(watermarks_to_make.get()) == 7:
         water_mark_xpos = int(resized_image.width / 8)
         xpos.set(water_mark_xpos)
@@ -202,17 +221,16 @@ def draw_watermark(resized_image):
 
         # Draw Image So It Is Editable
         im = ImageDraw.Draw(resized_image)
-        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
-        mf = ImageFont.truetype("arial.ttf", font_size.get())
+        # TODO 1. Have Fonts be changeable from like helvetica to sumn else, etc
+
+        mf = ImageFont.truetype(current_font, font_size.get())
 
         # Add Text to an image
         for i in range(1, int(watermarks_to_make.get()) + 1):
             if i % 2 == 1:
-                print(f"if: {i}")
                 im.text((xpos.get(), int(ypos.get() / 2) * 2.8), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
                         font=mf, anchor='mm')
             else:
-                print(f"elif: {i}")
                 im.text((xpos.get(), int(ypos.get() / 2.5)), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
                         font=mf, anchor='mm')
             xpos.set(int(xpos.get() + water_mark_xpos))
@@ -224,17 +242,15 @@ def draw_watermark(resized_image):
 
         # Draw Image So It Is Editable
         im = ImageDraw.Draw(resized_image)
-        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
-        mf = ImageFont.truetype("arial.ttf", font_size.get())
+        # TODO 1. Have Fonts be changeable from like helvetica to sumn else, etc
+        mf = ImageFont.truetype(current_font, font_size.get())
 
         # Add Text to an image
         for i in range(1, int(watermarks_to_make.get()) + 1):
             if i % 2 == 1:
-                print(f"if: {i}")
                 im.text((xpos.get(), int(ypos.get() / 2) * 2.8), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
                         font=mf, anchor='mm')
             else:
-                print(f"elif: {i}")
                 im.text((xpos.get(), int(ypos.get() / 2.5)), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
                         font=mf, anchor='mm')
             xpos.set(int(xpos.get() + water_mark_xpos))
@@ -246,17 +262,15 @@ def draw_watermark(resized_image):
 
         # Draw Image So It Is Editable
         im = ImageDraw.Draw(resized_image)
-        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
-        mf = ImageFont.truetype("arial.ttf", font_size.get())
+        # TODO 1. Have Fonts be changeable from like helvetica to sumn else, etc
+        mf = ImageFont.truetype(current_font, font_size.get())
 
         # Add Text to an image
         for i in range(1, int(watermarks_to_make.get()) + 1):
             if i % 2 == 1:
-                print(f"if: {i}")
                 im.text((xpos.get(), int(ypos.get() / 2) * 2.8), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
                         font=mf, anchor='mm')
             else:
-                print(f"elif: {i}")
                 im.text((xpos.get(), int(ypos.get() / 2.5)), f'{water_mark.get()}', (255, 0, 0, transparency.get()),
                         font=mf, anchor='mm')
             xpos.set(int(xpos.get() + water_mark_xpos))
@@ -267,8 +281,8 @@ def draw_watermark(resized_image):
 
         # Draw Image So It Is Editable
         im = ImageDraw.Draw(resized_image)
-        # TODO 1. Have Font be changeable from like helvetica to sumn else, etc
-        mf = ImageFont.truetype("arial.ttf", font_size.get())
+        # TODO 1. Have Fonts be changeable from like helvetica to sumn else, etc
+        mf = ImageFont.truetype(font=current_font, size=font_size.get())
 
         im.text((xpos.get(), ypos.get()), f'{water_mark.get()}', (255, 0, 0, transparency.get()), font=mf, anchor='mm')
 
